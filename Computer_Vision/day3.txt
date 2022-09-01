@@ -1,0 +1,69 @@
+docker run -p 8832:8554 --name ds_exp_sw --gpus '"device=1:2"' --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -w /opt/nvidia/deepstream/deepstream-6.0 -v /home/$USER/project/ds-experiments:/workspace/ds-experiments nvcr.io/nvidia/deepstream:6.0-triton
+
+docker attach --sig-proxy=false ds_exp_sw
+
+cd samples/configs/tao_pretrained_models/
+vi README.md
+
+
+docker run -p 8832:8554 ds_exp_sw --gpus '"device=1:2"' --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -w /opt/nvidia/deepstream/deepstream-6.0 -v /home/$USER/project/ds-experiments:/workspace/ds-experiments nvcr.io/nvidia/deepstream:6.0-triton
+
+docker run -p 8832:8554  --name ds_exp_sw --gpus '"device=1:2"' --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -w /opt/nvidia/deepstream/deepstream-6.0 -v /home/$USER/project/ds-experiments:/workspace/ds-experiments nvcr.io/nvidia/deepstream:6.0-triton
+
+cat README.md
+
+cp sources/apps/sample_apps/deepstream_reference_apps/deepstream_app_tao_configs/* samples/configs/tao_pretrained_models/
+
+cd /opt/nvidia/deepstream/deepstream/sources/apps/sample_apps/ 
+git clone https://github.com/NVIDIA-AI-IOT/deepstream_reference_apps.git 
+cd /opt/nvidia/deepstream/deepstream/ 
+cp sources/apps/sample_apps/deepstream_reference_apps/deepstream_app_tao_configs/* samples/configs/tao_pretrained_models/ 
+
+apt install -y wget zip 
+cd /opt/nvidia/deepstream/deepstream/samples/configs/tao_pretrained_models/ 
+./download_models.sh
+mv out.mp4 /workspace/ds-experiments/out_dashcam_18apr.mp4
+
+Day 5
+1)Move the train model to DS
+cp - r experiment_dir_final ~/project/ds-experiments/mask_detection_models
+
+2)Move the configuration files
+cd ~/project/face_mask_detection
+cp -r ds_configs/ ~/project/ds-experiments/mask_detection_config
+
+3) Copy the mp4(video file) into the ~/project/ds-experiment
+Use the drag and drop method into mobaxterm
+
+4)Inside DS Docker, move model file to the 'model path' --> samples/models/tao-pretrained_models/ 
+
+cp -r /workspace/ds-experiments/mask_detection_models/ samples/models/tao-pretrained_models/
+
+5)Inside docker, move the config files to the 'config path' --> samples/configs/
+cp -r /workspace/ds-experiments/mask_detection_config/ samples/configs
+
+6)Edit the config files
+cd samples/configs/mask_detection_config
+vi deepstream_app_source1_video_masknet_gpu.txt
+
+Inside vi:
+a)Change the video path --> /workspace/ds-experiments/facemaskdemo/facemaskdemo.mp4
+b)Change the model-engine-file --> ../../models/tao_pretrained_models/mask_detection_models resnet......
+
+c)enc-type=1
+
+7)Edit the 'inferrence config'
+
+vi config_infer_primary_masknet_gpu.txt
+
+inside vi:
+change the tlt-encodrd-model --> ../../models/tao_pretrained_models/mask_detection_models
+change the model-engine-file --> ../../models/tao_pretrained_models/mask_detection_models
+change the int8-calib-file --> ../../models/tao_pretrianed_models/mask_detection_models
+
+8)start running DS
+deepstream-app -c deepstream_app_source1_video_masknet_gpu.txt
+
+9)Move the output file to workspae
+mv out.mp4 /workspace/ds-experiments 
+
